@@ -2,7 +2,7 @@
 
 Implemented raytracing on spheres using HLSL shader, not DXR.
 
-<img src="file:///C:/Users/beta2/Desktop/project/Images/image1.png" title="" alt="image1.png" width="622">
+<img src="/Images/image1.png" title="" alt="image1.png" width="622">
 
 
 
