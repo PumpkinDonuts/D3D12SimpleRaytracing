@@ -388,8 +388,8 @@ void MainApp::UpdateMainPassCB(const GameTimer& gt) {
 	mMainPassCB.TotalTime = gt.TotalTime();
 	mMainPassCB.DeltaTime = gt.DeltaTime();
 	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	//mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[0].Direction = { 0.7f, 0.0f, 1.0f };
+	mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
+	//mMainPassCB.Lights[0].Direction = { 0.7f, 0.0f, 1.0f };
 	mMainPassCB.Lights[0].Strength = { 0.6f, 0.6f, 0.6f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
@@ -465,7 +465,7 @@ void MainApp::BuildShadersAndInputLayout() {
 void MainApp::BuildShapeGeometry() {
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(1.4f, 20, 20);
-
+	GeometryGenerator::MeshData plane = geoGen.CreateGrid(20.0f, 20.0f, 50, 50);
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
 	// define the regions in the buffer each submesh covers.
@@ -473,21 +473,28 @@ void MainApp::BuildShapeGeometry() {
 
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
 	UINT sphereVertexOffset = 0;
+	UINT planeVertexOffset = (UINT)sphere.Vertices.size();
 
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT sphereIndexOffset =  0;
+	UINT planeIndexOffset = (UINT)sphere.Indices32.size();
 
 	SubmeshGeometry sphereSubmesh;
 	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
 	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
 	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
 
+	SubmeshGeometry planeSubmesh;
+	planeSubmesh.IndexCount = (UINT)plane.Indices32.size();
+	planeSubmesh.StartIndexLocation = planeIndexOffset;
+	planeSubmesh.BaseVertexLocation = planeVertexOffset;
+
 	//
 	// Extract the vertex elements we are interested in and pack the
 	// vertices of all the meshes into one vertex buffer.
 	//
 
-	auto totalVertexCount = sphere.Vertices.size();
+	auto totalVertexCount = sphere.Vertices.size() + plane.Vertices.size();
 
 	std::vector<Vertex> vertices(totalVertexCount);
 
@@ -499,9 +506,17 @@ void MainApp::BuildShapeGeometry() {
 		vertices[k].Normal = sphere.Vertices[i].Normal;
 	}
 
+	for (size_t i = 0; i < plane.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = plane.Vertices[i].Position;
+		vertices[k].Normal = plane.Vertices[i].Normal;
+	}
+
+
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
+	indices.insert(indices.end(), std::begin(plane.GetIndices16()), std::end(plane.GetIndices16()));
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size()  * sizeof(std::uint16_t);
@@ -527,8 +542,10 @@ void MainApp::BuildShapeGeometry() {
 	geo->IndexBufferByteSize = ibByteSize;
 
 	geo->DrawArgs["sphere"] = sphereSubmesh;
+	geo->DrawArgs["plane"] = planeSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
+
 }
 
 void MainApp::BuildPSOs() {
@@ -635,6 +652,18 @@ void MainApp::BuildRenderItems() {
 		mAllRitems.push_back(std::move(leftSphereRitem));
 		mAllRitems.push_back(std::move(rightSphereRitem));
 	}
+
+	auto planeRitem = std::make_unique<RenderItem>();
+	planeRitem->World = MathHelper::Identity4x4();
+	XMStoreFloat4x4(&planeRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
+	planeRitem->ObjCBIndex = objCBIndex++;
+	planeRitem->Mat = mMaterials["mat2"].get();
+	planeRitem->Geo = mGeometries["shapeGeo"].get();
+	planeRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	planeRitem->IndexCount = planeRitem->Geo->DrawArgs["plane"].IndexCount;
+	planeRitem->StartIndexLocation = planeRitem->Geo->DrawArgs["plane"].StartIndexLocation;
+	planeRitem->BaseVertexLocation = planeRitem->Geo->DrawArgs["plane"].BaseVertexLocation;
+	mAllRitems.push_back(std::move(planeRitem));
 
 	// All the render items are opaque.
 	for(auto& e : mAllRitems)
