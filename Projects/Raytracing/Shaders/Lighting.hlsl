@@ -21,6 +21,13 @@ struct Sphere {
     float Radius;
 };
 
+struct Plane {
+    float3 CenterPosition;
+    float3 Normal;
+    float3 SpanW;
+    float3 SpanH;
+};
+
 struct TandSphere {
     float t;
     Sphere sphere;

@@ -11,6 +11,7 @@ FrameResource::FrameResource(ID3D12Device* device, UINT passCount, UINT objectCo
     MaterialCB = std::make_unique<UploadBuffer<MaterialConstants>>(device, materialCount, true);
     ObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(device, objectCount, true);
     SphereCB = std::make_unique<UploadBuffer<SphereConstants>>(device, sphereCount, true);
+    PlaneCB = std::make_unique<UploadBuffer<PlaneConstants>>(device, 1, true);
 }
 
 FrameResource::~FrameResource()

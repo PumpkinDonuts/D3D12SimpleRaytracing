@@ -42,6 +42,13 @@ cbuffer cbSphere : register(b3) {
     Sphere gSpheres[10];
 };
 
+cbuffer cbPlane : register(b4) {
+    float3 CenterPosition;
+    float3 Normal;
+    float3 SpanW;
+    float3 SpanH;
+};
+
 struct VertexIn {
 	float3 PosL    : POSITION;
     float3 NormalL : NORMAL;

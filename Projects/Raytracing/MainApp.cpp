@@ -60,6 +60,7 @@ private:
 	void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 	void UpdateSphereCBs(const GameTimer& gt);
+	void UpdatePlaneCBs(const GameTimer& gt);
 
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
@@ -99,6 +100,7 @@ private:
 
     PassConstants mMainPassCB;
 	SphereConstants mMainSphereCB;
+	PlaneConstants mMainPlaneCB;
 
 	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
@@ -199,6 +201,7 @@ void MainApp::Update(const GameTimer& gt) {
 	UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
 	UpdateSphereCBs(gt);
+	UpdatePlaneCBs(gt);
 }
 
 void MainApp::Draw(const GameTimer& gt) {
@@ -229,6 +232,9 @@ void MainApp::Draw(const GameTimer& gt) {
 
 	auto sphereCB = mCurrFrameResource->SphereCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(3, sphereCB->GetGPUVirtualAddress());
+
+	auto planeCB = mCurrFrameResource->PlaneCB->Resource();
+	mCommandList->SetGraphicsRootConstantBufferView(4, planeCB->GetGPUVirtualAddress());
 
     DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
 
@@ -412,18 +418,29 @@ void MainApp::UpdateSphereCBs(const GameTimer& gt) {
 
 }
 
+void MainApp::UpdatePlaneCBs(const GameTimer& gt) {
+	auto currPlaneCB = mCurrFrameResource->PlaneCB.get();
+
+	mMainPlaneCB.CenterPosition = { 0.0f, 0.0f, 0.0f };
+	mMainPlaneCB.Normal = { 0.0f, 1.0f, 0.0f };
+	mMainPlaneCB.SpanH = { 10.0f, 0.0f, 0.0f };
+	mMainPlaneCB.SpanW = { 0.0f, 0.0f, 10.0f };
+
+	currPlaneCB->CopyData(0, mMainPlaneCB);
+}
 void MainApp::BuildRootSignature() {
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 
 	// Create root CBV.
 	slotRootParameter[0].InitAsConstantBufferView(0);
 	slotRootParameter[1].InitAsConstantBufferView(1);
 	slotRootParameter[2].InitAsConstantBufferView(2);
 	slotRootParameter[3].InitAsConstantBufferView(3);
+	slotRootParameter[4].InitAsConstantBufferView(4);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
