@@ -75,6 +75,26 @@ float IntersectRaySphere(float3 startPoint, float3 direction, Sphere sphere) {
     }
 }
 
+float IntersectRayPlane(float3 startPoint, float3 direction, Plane plane) {
+    float3 planeCenter = plane.CenterPosition;
+    float3 planeNormal = plane.Normal;
+
+    float3 diffCenter = planeCenter - startPoint;
+
+    //t*dir = diffCenter + (w_on_plane + h_on_plane);
+    //t*dot(dir,normal) = dot(diffCenter, normal);
+    //t = dot(diffCenter,normal) / dot(dir,normal) ;
+    //if abs (dot(t*dir - diffCenter, plane.SpanW)) > 1 : return -1;
+    //if abs (dot(t*dir - diffCenter, plane.SpanH)) > 1 : return -1;
+
+    float t = dot(diffCenter, planeNormal) / dot(direction, planeNormal);
+
+    if (abs(dot(t * direction - diffCenter, plane.SpanW)) > 1) { return -1.0f; }
+    if (abs(dot(t * direction - diffCenter, plane.SpanH)) > 1) { return -1.0f; }
+
+    return t;
+}
+
 TandSphere ClosestIntersection(float3 startPoint, float3 direction, Sphere spheres[MaxSpheres]) {
     TandSphere ts;
     float t_min = 1000.0f;
@@ -104,12 +124,16 @@ TandSphere ClosestIntersection(float3 startPoint, float3 direction, Sphere spher
     return ts;
 }
 
-float3 CalcLighting(float3 pos, float3 normal, float3 view, Light light, Sphere spheres[MaxSpheres], Material mat) {
+float3 CalcLighting(float3 pos, float3 normal, float3 view, Light light, Sphere spheres[MaxSpheres], Plane plane, Material mat) {
     float i = 0.0f;
 
     //shadow check
+    //Sphere
     TandSphere ts = ClosestIntersection(pos, -light.Direction, spheres);
-    if (ts.t < 999.0f && ts.t > 0.1f) return i;
+    //Plane
+    float plane_t = IntersectRayPlane(pos, view, plane);
+    if (ts.t < 999.0f && ts.t > 0.1f && plane_t > 0.1f) return i;
+
 
     //diffuse
     float n_dot_l = dot(normal, -light.Direction);
@@ -127,46 +151,98 @@ float3 CalcLighting(float3 pos, float3 normal, float3 view, Light light, Sphere 
     return i;
 }
 
-float3 TraceRay(float3 startPoint, float3 direction, Light light, Sphere spheres[MaxSpheres], Material mat) {
+float3 TraceRay(float3 startPoint, float3 direction, Light light, Sphere spheres[MaxSpheres], Plane plane, Material mat) {
     float3 backgroundColor = 0.0f;
     TandSphere ts = ClosestIntersection(startPoint, direction, spheres);
-    if (ts.t < 0.001f || ts.t > 999.0f) {
+    float plane_t = IntersectRayPlane(startPoint, direction, plane);
+    
+    if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.0f) {
         return backgroundColor;
     }
     else {
-        float3 newPoint = startPoint + ts.t * direction;
-        float3 normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+        float3 newPoint;
+        float3 normal;
+        if (ts.t < 999.0f && ts.t > 0.01f) {
+            if (plane_t < 0.0f) {
+                //min = sphere
+                newPoint = startPoint + ts.t * direction;
+                normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+            }
+            else {
+                if (ts.t > plane_t) {
+                    //min = plane
+                    newPoint = startPoint + plane_t * direction;
+                    normal = plane.Normal;
+                }
+                else {
+                    //min = sphere
+                    newPoint = startPoint + ts.t * direction;
+                    normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+                }
+            }
+        }
+        else {
+            //min == plane
+            newPoint = startPoint + plane_t * direction;
+            normal = plane.Normal;
+        }
 
-        return mat.DiffuseAlbedo.rgb * CalcLighting(newPoint, normal, direction, light, spheres, mat);
+        return mat.DiffuseAlbedo.rgb * CalcLighting(newPoint, normal, direction, light, spheres, plane, mat);
     }
 }
 
-float3 ReflectTraceRay(float3 startPoint, float3 direction, Light light, Sphere spheres[MaxSpheres], Material mat, int num) {
+float3 ReflectTraceRay(float3 startPoint, float3 direction, Light light, Sphere spheres[MaxSpheres], Plane plane, Material mat, int num) {
     float3 color = 0.0f;
 
     float3 p = startPoint;
     float3 d = direction;
     float r = mat.Reflectance;
+    float3 backgroundColor = 0.0f;
 
     for (int i = 0; i < num; i++) {
-        float3 backgroundColor = 0.0f;
         TandSphere ts = ClosestIntersection(p, d, spheres);
-        if (ts.t < 0.001f || ts.t > 999.0f) {
+        float plane_t = IntersectRayPlane(startPoint, direction, plane);
+
+        if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.0f) {
             color += backgroundColor;
             break;
         }
         else {
-            float3 newPoint = startPoint + ts.t * direction;
-            float3 normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+            float3 newPoint;
+            float3 normal;
+            if (ts.t < 999.0f && ts.t > 0.01f) {
+                if (plane_t < 0.0f) {
+                    //min = sphere
+                    newPoint = startPoint + ts.t * direction;
+                    normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+                }
+                else {
+                    if (ts.t > plane_t) {
+                        //min = plane
+                        newPoint = startPoint + plane_t * direction;
+                        normal = plane.Normal;
+                    }
+                    else {
+                        //min = sphere
+                        newPoint = startPoint + ts.t * direction;
+                        normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
+                    }
+                }
+            }
+            else {
+                //min == plane
+                newPoint = startPoint + plane_t * direction;
+                normal = plane.Normal;
+            }
 
             if (i == 0) {
                 //fisrt ray = only get local color
-                float3 local_color = mat.DiffuseAlbedo.rgb * CalcLighting(newPoint, normal, d, light, spheres, mat);
+                float3 local_color = mat.DiffuseAlbedo.rgb * CalcLighting(newPoint, normal, d, light, spheres, plane, mat);
                 color += local_color;
             }
             else {
                 //reflected ray = trace ray and get color
-                float3 reflected_color = TraceRay(p, d, light, spheres, mat);
+                float3 reflected_color = TraceRay(p, d, light, spheres, plane, mat);
                 color +=  reflected_color * pow(r, (float)i);
             }
 

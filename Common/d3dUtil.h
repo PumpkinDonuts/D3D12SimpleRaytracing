@@ -245,12 +245,16 @@ struct SphereConstants
     Sphere spheres[10];
 };
 
+struct Plane {
+    DirectX::XMFLOAT3 CenterPosition = { 0.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 Normal = { 0.0f, 1.0f, 0.0f };
+    DirectX::XMFLOAT3 SpanW = { 10.0f, 0.0f, 0.0f };
+    DirectX::XMFLOAT3 SpanH = { 0.0f, 0.0f, 10.0f };
+};
+
 struct PlaneConstants
 {
-    DirectX::XMFLOAT3 CenterPosition = { 0.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT3 Normal = { 0.0f, 0.0f, 1.0f };
-    DirectX::XMFLOAT3 SpanW = { 1.0f, 0.0f, 0.0f };
-    DirectX::XMFLOAT3 SpanH = { 0.0f, 1.0f, 0.0f };
+    Plane planes[1];
 };
 
 // Simple struct to represent a material for our demos.  A production 3D engine

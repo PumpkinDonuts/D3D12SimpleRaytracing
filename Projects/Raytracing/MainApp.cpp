@@ -419,15 +419,17 @@ void MainApp::UpdateSphereCBs(const GameTimer& gt) {
 }
 
 void MainApp::UpdatePlaneCBs(const GameTimer& gt) {
+
 	auto currPlaneCB = mCurrFrameResource->PlaneCB.get();
 
-	mMainPlaneCB.CenterPosition = { 0.0f, 0.0f, 0.0f };
-	mMainPlaneCB.Normal = { 0.0f, 1.0f, 0.0f };
-	mMainPlaneCB.SpanH = { 10.0f, 0.0f, 0.0f };
-	mMainPlaneCB.SpanW = { 0.0f, 0.0f, 10.0f };
+	mMainPlaneCB.planes[0].CenterPosition = XMFLOAT3 { 0.0f, 0.0f, 0.0f };
+	mMainPlaneCB.planes[0].Normal = XMFLOAT3 { 0.0f, 1.0f, 0.0f };
+	mMainPlaneCB.planes[0].SpanW = XMFLOAT3 { 10.0f, 0.0f, 0.0f };
+	mMainPlaneCB.planes[0].SpanH = XMFLOAT3 { 0.0f, 0.0f, 10.0f };
 
 	currPlaneCB->CopyData(0, mMainPlaneCB);
 }
+
 void MainApp::BuildRootSignature() {
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
@@ -601,7 +603,7 @@ void MainApp::BuildFrameResources() {
     for(int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), 10));
+            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), 1, 1));
     }
 }
 
@@ -674,7 +676,7 @@ void MainApp::BuildRenderItems() {
 	planeRitem->World = MathHelper::Identity4x4();
 	XMStoreFloat4x4(&planeRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
 	planeRitem->ObjCBIndex = objCBIndex++;
-	planeRitem->Mat = mMaterials["mat2"].get();
+	planeRitem->Mat = mMaterials["mat1"].get();
 	planeRitem->Geo = mGeometries["shapeGeo"].get();
 	planeRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	planeRitem->IndexCount = planeRitem->Geo->DrawArgs["plane"].IndexCount;
