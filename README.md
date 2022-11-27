@@ -2,7 +2,7 @@
 
 Implemented raytracing on spheres using HLSL shader, not DXR.
 
-<img title="" src="file:///Images/image2.png" alt="image1.png" width="622">
+<img title="" src="/Images/image2.png" alt="image1.png" width="622">
 
 ```hlsl
 float4 PS(VertexOut pin) : SV_Target {
