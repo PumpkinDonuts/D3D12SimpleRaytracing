@@ -23,9 +23,13 @@ struct Sphere {
 
 struct Plane {
     float3 CenterPosition;
+    int x;
     float3 Normal;
+    int y;
     float3 SpanW;
+    int z;
     float3 SpanH;
+    int w;
 };
 
 struct TandSphere {
@@ -89,8 +93,8 @@ float IntersectRayPlane(float3 startPoint, float3 direction, Plane plane) {
 
     float t = dot(diffCenter, planeNormal) / dot(direction, planeNormal);
 
-    if (abs(dot(t * direction - diffCenter, plane.SpanW)) > 1) { return -1.0f; }
-    if (abs(dot(t * direction - diffCenter, plane.SpanH)) > 1) { return -1.0f; }
+    if (abs(dot(t * direction - diffCenter, plane.SpanW)) > length(plane.SpanW) * length(t * direction - diffCenter)) { return -1.0f; }
+    if (abs(dot(t * direction - diffCenter, plane.SpanH)) > length(plane.SpanH) * length(t * direction - diffCenter)) { return -1.0f; }
 
     return t;
 }
@@ -125,7 +129,7 @@ TandSphere ClosestIntersection(float3 startPoint, float3 direction, Sphere spher
 }
 
 float3 CalcLighting(float3 pos, float3 normal, float3 view, Light light, Sphere spheres[MaxSpheres], Plane plane, Material mat) {
-    float i = 0.0f;
+    float3 i = 0.0f;
 
     //shadow check
     //Sphere
@@ -156,14 +160,14 @@ float3 TraceRay(float3 startPoint, float3 direction, Light light, Sphere spheres
     TandSphere ts = ClosestIntersection(startPoint, direction, spheres);
     float plane_t = IntersectRayPlane(startPoint, direction, plane);
     
-    if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.0f) {
+    if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.001f) {
         return backgroundColor;
     }
     else {
         float3 newPoint;
         float3 normal;
         if (ts.t < 999.0f && ts.t > 0.01f) {
-            if (plane_t < 0.0f) {
+            if (plane_t < 0.001f) {
                 //min = sphere
                 newPoint = startPoint + ts.t * direction;
                 normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
@@ -201,9 +205,9 @@ float3 ReflectTraceRay(float3 startPoint, float3 direction, Light light, Sphere 
 
     for (int i = 0; i < num; i++) {
         TandSphere ts = ClosestIntersection(p, d, spheres);
-        float plane_t = IntersectRayPlane(startPoint, direction, plane);
+        float plane_t = IntersectRayPlane(p, d, plane);
 
-        if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.0f) {
+        if ((ts.t < 0.001f || ts.t > 999.0f) && plane_t < 0.001f) {
             color += backgroundColor;
             break;
         }
@@ -211,29 +215,30 @@ float3 ReflectTraceRay(float3 startPoint, float3 direction, Light light, Sphere 
             float3 newPoint;
             float3 normal;
             if (ts.t < 999.0f && ts.t > 0.01f) {
-                if (plane_t < 0.0f) {
+                if (plane_t < 0.01f) {
                     //min = sphere
-                    newPoint = startPoint + ts.t * direction;
+                    newPoint = p + ts.t * d;
                     normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
                 }
                 else {
                     if (ts.t > plane_t) {
                         //min = plane
-                        newPoint = startPoint + plane_t * direction;
+                        newPoint = p + plane_t * d;
                         normal = plane.Normal;
                     }
                     else {
                         //min = sphere
-                        newPoint = startPoint + ts.t * direction;
+                        newPoint = p + ts.t * d;
                         normal = (newPoint - ts.sphere.CenterPosition) / ts.sphere.Radius;
                     }
                 }
             }
             else {
                 //min == plane
-                newPoint = startPoint + plane_t * direction;
+                newPoint = p + plane_t * d;
                 normal = plane.Normal;
             }
+
 
             if (i == 0) {
                 //fisrt ray = only get local color
@@ -249,6 +254,7 @@ float3 ReflectTraceRay(float3 startPoint, float3 direction, Light light, Sphere 
             //update current point & direction
             p = newPoint;
             d = GetReflection(d, normal);
+
         }
     }
     return color;

@@ -247,9 +247,13 @@ struct SphereConstants
 
 struct Plane {
     DirectX::XMFLOAT3 CenterPosition = { 0.0f, 0.0f, 0.0f };
+    int x = 0.0f;
     DirectX::XMFLOAT3 Normal = { 0.0f, 1.0f, 0.0f };
+    int y = 0.0f;
     DirectX::XMFLOAT3 SpanW = { 10.0f, 0.0f, 0.0f };
+    int z = 0.0f;
     DirectX::XMFLOAT3 SpanH = { 0.0f, 0.0f, 10.0f };
+    int w = 0.0f;
 };
 
 struct PlaneConstants
