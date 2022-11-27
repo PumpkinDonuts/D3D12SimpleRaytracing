@@ -60,6 +60,7 @@ private:
 	void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 	void UpdateSphereCBs(const GameTimer& gt);
+	void UpdatePlaneCBs(const GameTimer& gt);
 
     void BuildRootSignature();
     void BuildShadersAndInputLayout();
@@ -99,6 +100,7 @@ private:
 
     PassConstants mMainPassCB;
 	SphereConstants mMainSphereCB;
+	PlaneConstants mMainPlaneCB;
 
 	XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
 	XMFLOAT4X4 mView = MathHelper::Identity4x4();
@@ -199,6 +201,7 @@ void MainApp::Update(const GameTimer& gt) {
 	UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
 	UpdateSphereCBs(gt);
+	UpdatePlaneCBs(gt);
 }
 
 void MainApp::Draw(const GameTimer& gt) {
@@ -227,8 +230,13 @@ void MainApp::Draw(const GameTimer& gt) {
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
+
+
 	auto sphereCB = mCurrFrameResource->SphereCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(3, sphereCB->GetGPUVirtualAddress());
+
+	auto planeCB = mCurrFrameResource->PlaneCB->Resource();
+	mCommandList->SetGraphicsRootConstantBufferView(4, planeCB->GetGPUVirtualAddress());
 
     DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
 
@@ -412,18 +420,36 @@ void MainApp::UpdateSphereCBs(const GameTimer& gt) {
 
 }
 
+void MainApp::UpdatePlaneCBs(const GameTimer& gt) {
+
+	auto currPlaneCB = mCurrFrameResource->PlaneCB.get();
+
+	mMainPlaneCB.planes[0].x = 0;
+	mMainPlaneCB.planes[0].y = 0;
+	mMainPlaneCB.planes[0].z = 0;
+	mMainPlaneCB.planes[0].w = 0;
+
+	mMainPlaneCB.planes[0].CenterPosition = { 0.0f, 0.0f, 0.0f };
+	mMainPlaneCB.planes[0].Normal = { 0.0f, 1.0f, 0.0f };
+	mMainPlaneCB.planes[0].SpanW = { 50.0f, 0.0f, 0.0f };
+	mMainPlaneCB.planes[0].SpanH = { 0.0f, 0.0f, 50.0f };
+
+	currPlaneCB->CopyData(0, mMainPlaneCB);
+}
+
 void MainApp::BuildRootSignature() {
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 
 	// Create root CBV.
 	slotRootParameter[0].InitAsConstantBufferView(0);
 	slotRootParameter[1].InitAsConstantBufferView(1);
 	slotRootParameter[2].InitAsConstantBufferView(2);
 	slotRootParameter[3].InitAsConstantBufferView(3);
+	slotRootParameter[4].InitAsConstantBufferView(4);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
@@ -465,7 +491,7 @@ void MainApp::BuildShadersAndInputLayout() {
 void MainApp::BuildShapeGeometry() {
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(1.4f, 20, 20);
-	GeometryGenerator::MeshData plane = geoGen.CreateGrid(20.0f, 20.0f, 50, 50);
+	GeometryGenerator::MeshData plane = geoGen.CreateGrid(100.0f, 100.0f, 50, 50);
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
 	// define the regions in the buffer each submesh covers.
@@ -584,7 +610,7 @@ void MainApp::BuildFrameResources() {
     for(int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), 10));
+            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), 1, 1));
     }
 }
 
@@ -634,7 +660,7 @@ void MainApp::BuildRenderItems() {
 		leftSphereRitem->ObjCBIndex = objCBIndex++;
 		leftSphereRitem->Mat = mMaterials["mat0"].get();
 		leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
-		leftSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		leftSphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		leftSphereRitem->IndexCount = leftSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
 		leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 		leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
@@ -644,7 +670,7 @@ void MainApp::BuildRenderItems() {
 		rightSphereRitem->ObjCBIndex = objCBIndex++;
 		rightSphereRitem->Mat = mMaterials["mat1"].get();
 		rightSphereRitem->Geo = mGeometries["shapeGeo"].get();
-		rightSphereRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		rightSphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		rightSphereRitem->IndexCount = rightSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
 		rightSphereRitem->StartIndexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 		rightSphereRitem->BaseVertexLocation = rightSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
@@ -657,9 +683,9 @@ void MainApp::BuildRenderItems() {
 	planeRitem->World = MathHelper::Identity4x4();
 	XMStoreFloat4x4(&planeRitem->TexTransform, XMMatrixScaling(1.0f, 1.0f, 1.0f));
 	planeRitem->ObjCBIndex = objCBIndex++;
-	planeRitem->Mat = mMaterials["mat2"].get();
+	planeRitem->Mat = mMaterials["mat1"].get();
 	planeRitem->Geo = mGeometries["shapeGeo"].get();
-	planeRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	planeRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	planeRitem->IndexCount = planeRitem->Geo->DrawArgs["plane"].IndexCount;
 	planeRitem->StartIndexLocation = planeRitem->Geo->DrawArgs["plane"].StartIndexLocation;
 	planeRitem->BaseVertexLocation = planeRitem->Geo->DrawArgs["plane"].BaseVertexLocation;

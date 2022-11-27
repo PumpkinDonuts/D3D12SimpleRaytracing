@@ -2,12 +2,9 @@
 
 Implemented raytracing on spheres using HLSL shader, not DXR.
 
-<img src="/Images/image1.png" title="" alt="image1.png" width="622">
-
-
+<img title="" src="file:///Images/image2.png" alt="image1.png" width="622">
 
 ```hlsl
-
 float4 PS(VertexOut pin) : SV_Target {
 ...
     Material mat = { gDiffuseAlbedo, gReflectance, gShininess };
@@ -22,7 +19,6 @@ float4 PS(VertexOut pin) : SV_Target {
 
     return litColor;
 }
-
 ```
 
 ```hlsl
@@ -69,5 +65,3 @@ Since HLSL shader does not support recursive functions, this raytracing is imple
 ## Reference
 
 [&quot;Introduction to 3D Game Programming with DirectX 12&quot;](https://github.com/d3dcoder/d3d12book)
-
-

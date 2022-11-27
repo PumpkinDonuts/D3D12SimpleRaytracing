@@ -42,6 +42,10 @@ cbuffer cbSphere : register(b3) {
     Sphere gSpheres[10];
 };
 
+cbuffer cbPlane : register(b4) {
+    Plane gPlanes[1];
+};
+
 struct VertexIn {
 	float3 PosL    : POSITION;
     float3 NormalL : NORMAL;
@@ -81,7 +85,8 @@ float4 PS(VertexOut pin) : SV_Target {
 
     Material mat = { gDiffuseAlbedo, gReflectance, gShininess };
     //float3 tracedLight = TraceRay(gEyePosW, -toEyeW, gLights[0], gSpheres, mat);
-    float3 tracedLight = ReflectTraceRay(gEyePosW, -toEyeW, gLights[0], gSpheres, mat, 2);
+    //float3 tracedLight = ReflectTraceRay(gEyePosW, -toEyeW, gLights[0], gSpheres, mat, 2);
+    float3 tracedLight = ReflectTraceRay(gEyePosW, -toEyeW, gLights[0], gSpheres, gPlanes[0], mat, 3);
 
     float4 litColor;
     litColor.rgb = tracedLight;
