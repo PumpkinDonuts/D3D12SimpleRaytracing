@@ -414,6 +414,13 @@ void MainApp::UpdateSphereCBs(const GameTimer& gt) {
 		mMainSphereCB.spheres[i + 5].CenterPosition = { +3.0f, 3.0f, -6.0f + i * 3.0f };
 		mMainSphereCB.spheres[i].Radius = 1.4f;
 		mMainSphereCB.spheres[i + 5].Radius = 1.4f;
+
+		mMainSphereCB.spheres[i].DiffuseAlbedo = XMFLOAT4(Colors::LightGreen);
+		mMainSphereCB.spheres[i + 5].DiffuseAlbedo = XMFLOAT4(Colors::Coral);
+		mMainSphereCB.spheres[i].Reflectance = 0.3f;
+		mMainSphereCB.spheres[i + 5].Reflectance = 0.4f;
+		mMainSphereCB.spheres[i].Shininess = 10.0f;
+		mMainSphereCB.spheres[i + 5].Shininess = 20.0f;
 	}
 
 	currSphereCB->CopyData(0, mMainSphereCB);
@@ -424,15 +431,14 @@ void MainApp::UpdatePlaneCBs(const GameTimer& gt) {
 
 	auto currPlaneCB = mCurrFrameResource->PlaneCB.get();
 
-	mMainPlaneCB.planes[0].x = 0;
-	mMainPlaneCB.planes[0].y = 0;
-	mMainPlaneCB.planes[0].z = 0;
-	mMainPlaneCB.planes[0].w = 0;
-
 	mMainPlaneCB.planes[0].CenterPosition = { 0.0f, 0.0f, 0.0f };
 	mMainPlaneCB.planes[0].Normal = { 0.0f, 1.0f, 0.0f };
 	mMainPlaneCB.planes[0].SpanW = { 50.0f, 0.0f, 0.0f };
 	mMainPlaneCB.planes[0].SpanH = { 0.0f, 0.0f, 50.0f };
+
+	mMainPlaneCB.planes[0].DiffuseAlbedo = XMFLOAT4(Colors::LightSteelBlue);
+	mMainPlaneCB.planes[0].Reflectance = 0.5f;
+	mMainPlaneCB.planes[0].Shininess = 30.0f;
 
 	currPlaneCB->CopyData(0, mMainPlaneCB);
 }
