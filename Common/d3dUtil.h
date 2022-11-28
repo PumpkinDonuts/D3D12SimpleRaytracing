@@ -238,6 +238,11 @@ struct Sphere
 {
     DirectX::XMFLOAT3 CenterPosition = { 0.0f, 0.0f, 0.0f };
     float Radius = 1.5f;
+
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float Reflectance = 0.2f;
+    float Shininess = 10.0f;
+    int pad[2] = { 0, };
 };
 
 struct SphereConstants
@@ -247,13 +252,18 @@ struct SphereConstants
 
 struct Plane {
     DirectX::XMFLOAT3 CenterPosition = { 0.0f, 0.0f, 0.0f };
-    int x = 0.0f;
+    int pad1 = 0;
     DirectX::XMFLOAT3 Normal = { 0.0f, 1.0f, 0.0f };
-    int y = 0.0f;
+    int pad2 = 0;
     DirectX::XMFLOAT3 SpanW = { 10.0f, 0.0f, 0.0f };
-    int z = 0.0f;
+    int pad3 = 0;
     DirectX::XMFLOAT3 SpanH = { 0.0f, 0.0f, 10.0f };
-    int w = 0.0f;
+    int pad4 = 0;
+
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float Reflectance = 0.2f;
+    float Shininess = 10.0f;
+    int pad5[2] = { 0, };
 };
 
 struct PlaneConstants
