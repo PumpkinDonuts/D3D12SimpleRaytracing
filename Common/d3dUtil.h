@@ -229,6 +229,7 @@ struct MaterialConstants
 	DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
 	float Reflectance = 0.1f;
 	float Shininess = 10.0f;
+    int pad[2] = { 0, };
 
 	// Used in texture mapping.
 	DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
